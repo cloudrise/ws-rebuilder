@@ -61,14 +61,6 @@ def start_workspace(session, to_start):
     except Exception as e:
         print("Something wrong while starting WS. ", e)
 
-# Check if all workspaces are in AVAILABLE state
-def check_if_all_started(session):
-    all_workspaces = get_workspace_details(session)
-    for workspace in all_workspaces:
-        if workspace["State"] != "AVAILABLE":
-            return False
-    return True
-
 # Import users from CSV file
 def import_from_csv(path):
     with open(path) as users_csv:
