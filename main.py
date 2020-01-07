@@ -2,7 +2,7 @@ import boto3, argparse, sys, time
 
 # Creates AWS session.
 # Returns session object with specified region and with/without AWS credentials.
-def CreateSession(accesskey, secretkey, region):
+def create_session(accesskey, secretkey, region):
     try:
         if not accesskey or not secretkey:
             return boto3.Session(
@@ -18,28 +18,28 @@ def CreateSession(accesskey, secretkey, region):
         sys.exit()
 
 # Returns list of WorkSpaces details
-def GetWorkSpacesDetails(session):
-    AllWorkSpaces = []
+def get_workspace_details(session):
+    all_workspaces = []
     try:
         client = session.client('workspaces')
-        Response = client.describe_workspaces()
-        while Response:  
-            AllWorkSpaces += Response['Workspaces']
-            Response = client.describe_workspaces(NextToken = Response['NextToken']) if 'NextToken' in Response else None # Pagination handling
+        response = client.describe_workspaces()
+        while response:  
+            all_workspaces += response['Workspaces']
+            response = client.describe_workspaces(NextToken = response['NextToken']) if 'NextToken' in response else None # Pagination handling
     except Exception as e:
         print("Something wrong while getting workspaces details. ", e)
     
-    return AllWorkSpaces
+    return all_workspaces
 
 # Rebuild given workspace
-def RebuildWorkSpace(session, toRebuild):
+def rebuild_workspace(session, to_rebuild):
     client = session.client('workspaces')
-    print("Rebuilding in progress: ", toRebuild)
+    print("Rebuilding in progress: ", to_rebuild)
     try:
         resp = client.rebuild_workspaces(
-            RebuildWorkspaceRequests=[
+            rebuild_workspaceRequests=[
                 {
-                    'WorkspaceId' : toRebuild
+                    'WorkspaceId' : to_rebuild
                 }
             ]
         )
@@ -47,12 +47,12 @@ def RebuildWorkSpace(session, toRebuild):
         print("Something wrong while rebuilding workspace.", e)
 
 # Start given workspace
-def StartWorkSpace(session, toStart):
+def start_workspace(session, toStart):
     client = session.client('workspaces')
     print("Starting in progress: ", toStart)
     try:
         response = client.start_workspaces(
-        StartWorkspaceRequests=[
+        start_workspaceRequests=[
             {
                 'WorkspaceId' : toStart
             }
@@ -62,9 +62,9 @@ def StartWorkSpace(session, toStart):
         print("Something wrong while starting WS. ", e)
 
 # Check if all workspaces are in AVAILABLE state
-def CheckIfAllStarted(session):
-    AllWorkSpaces = GetWorkSpacesDetails(session)
-    for workspace in AllWorkSpaces:
+def check_if_all_started(session):
+    all_workspaces = get_workspace_details(session)
+    for workspace in all_workspaces:
         if workspace["State"] != "AVAILABLE":
             return False
     return True
@@ -78,24 +78,24 @@ def main():
     parser.add_argument("--secretkey", help="Amazon Secret Access Key. If not specified, IAM role will be used instead.")
     args = parser.parse_args()
 
-    session = CreateSession(args.accesskey, args.secretkey, args.region)
+    session = create_session(args.accesskey, args.secretkey, args.region)
 
-    WorkSpaces = GetWorkSpacesDetails(session)
+    all_workspaces = get_workspace_details(session)
 
     print("WorkSpaces must be started before rebuilding.")
-    for workspace in WorkSpaces:
+    for workspace in all_workspaces:
         if workspace["State"] == "STOPPED":
-            StartWorkSpace(session, workspace["WorkspaceId"])
+            start_workspace(session, workspace["WorkspaceId"])
 
-    while not CheckIfAllStarted(session):
+    while not check_if_all_started(session):
         print("Not all WorkSpaces are running. Next check in 30 seconds.")
         time.sleep(30)
 
     confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
 
     if confirm == "YES":
-        for workspace in WorkSpaces:
-            RebuildWorkSpace(session, workspace["WorkspaceId"])
+        for workspace in all_workspaces:
+            rebuild_workspace(session, workspace["WorkspaceId"])
     else:
         print("Rebuilding canceled.")
 
