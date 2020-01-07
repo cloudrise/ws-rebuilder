@@ -89,10 +89,16 @@ def find_csv_workspaces(session, users, directory_id):
             print("Workspace for user {} doesn't exist. ".format(user[0]))
         else:
             for workspace in response['Workspaces']:
-                to_rebuild.append(workspace['WorkspaceId'])
+                to_rebuild.append(workspace)
     return to_rebuild
 
-# Check if 
+# Check if all given Workspaces are in available state
+def check_workspace_state(session, workspaces = []):
+    for workspace in workspaces:
+        while workspace['State'] != 'AVAILABLE':
+            print('Workspace {} is not ready yet. Username: {}. Next check within 30 seconds.'.format(workspace['WorkspaceId'], workspace['UserName']))
+            return False
+    return True
 
 def main():
 
@@ -113,13 +119,10 @@ def main():
         for workspace in all_workspaces:
             if workspace["State"] == "STOPPED":
                 start_workspace(session, workspace["WorkspaceId"])
-
-        while not check_if_all_started(session):
-            print("Not all WorkSpaces are running. Next check in 30 seconds.")
+        while not check_workspace_state(session, all_workspaces): # it won't move forward until all workspaces are in available state
             time.sleep(30)
-
+            all_workspaces = get_workspace_details(session) # refresh list details to get new Workspaces state
         confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
-
         if confirm == "YES":
             for workspace in all_workspaces:
                 rebuild_workspace(session, workspace["WorkspaceId"])
@@ -127,12 +130,12 @@ def main():
             print("Rebuilding canceled.")
     else:
         users_from_csv = import_from_csv("private/input.csv")
-        to_rebuild = find_csv_workspaces(session, users_from_csv, 'd-9367241b46')
-        for workspace in to_rebuild:
-            start_workspace(session, workspace)
-        print("Rebuild will start within 5 minutes.")
-        time.sleep(300) # temporary, to do: add auto checker if workspace is available
-        for workspace in to_rebuild:
-            rebuild_workspace(session, workspace)
+        workspaces_from_csv = find_csv_workspaces(session, users_from_csv, 'd-9367241b46')
+        for workspace in workspaces_from_csv:
+            start_workspace(session, workspace['WorkspaceId'])
+        while not check_workspace_state(session, workspaces_from_csv): # it won't move forward until all workspaces are in available state
+            workspaces_from_csv = find_csv_workspaces(session, users_from_csv, 'd-9367241b46') # refresh list details to get new Workspaces state
+        for workspace in workspaces_from_csv:
+            rebuild_workspace(session, workspace['WorkspaceId'])
 if __name__ == '__main__':
     main()
