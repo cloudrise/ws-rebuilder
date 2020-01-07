@@ -37,7 +37,7 @@ def rebuild_workspace(session, to_rebuild):
     print("Rebuilding in progress: ", to_rebuild)
     try:
         response = client.rebuild_workspaces(
-            rebuild_workspaceRequests=[
+            RebuildWorkspaceRequests=[
                 {
                     'WorkspaceId' : to_rebuild
                 }
@@ -92,6 +92,8 @@ def find_csv_workspaces(session, users, directory_id):
                 to_rebuild.append(workspace['WorkspaceId'])
     return to_rebuild
 
+# Check if 
+
 def main():
 
     # Input args
@@ -128,6 +130,9 @@ def main():
         to_rebuild = find_csv_workspaces(session, users_from_csv, 'd-9367241b46')
         for workspace in to_rebuild:
             start_workspace(session, workspace)
+        print("Rebuild will start within 5 minutes.")
         time.sleep(300) # temporary, to do: add auto checker if workspace is available
+        for workspace in to_rebuild:
+            rebuild_workspace(session, workspace)
 if __name__ == '__main__':
     main()
