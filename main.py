@@ -1,4 +1,4 @@
-import boto3, argparse, sys, time
+import boto3, argparse, sys, time, csv
 
 # Creates AWS session.
 # Returns session object with specified region and with/without AWS credentials.
@@ -69,6 +69,29 @@ def check_if_all_started(session):
             return False
     return True
 
+# Import users from CSV file
+def import_from_csv(path):
+    with open(path) as users_csv:
+        csv_reader = csv.reader(users_csv)
+        user_list = list(csv_reader)
+        return user_list
+
+# Build a Workspace list to rebuild
+def find_csv_workspaces(session, users, directory_id):
+    client = session.client('workspaces')
+    to_rebuild = []
+    for user in users:
+        response = client.describe_workspaces(
+            DirectoryId = directory_id,
+            UserName = user[0]
+        )
+        if not response['Workspaces']:
+            print("Workspace for user {} doesn't exist. ".format(user[0]))
+        else:
+            for workspace in response['Workspaces']:
+                to_rebuild.append(workspace['WorkspaceId'])
+    return to_rebuild
+
 def main():
 
     # Input args
@@ -80,24 +103,31 @@ def main():
 
     session = create_session(args.accesskey, args.secretkey, args.region)
 
-    all_workspaces = get_workspace_details(session)
+    action = input("Rebuild all or from CSV? [all/csv]: ")
+    if action == "all":        
+        all_workspaces = get_workspace_details(session)
 
-    print("WorkSpaces must be started before rebuilding.")
-    for workspace in all_workspaces:
-        if workspace["State"] == "STOPPED":
-            start_workspace(session, workspace["WorkspaceId"])
-
-    while not check_if_all_started(session):
-        print("Not all WorkSpaces are running. Next check in 30 seconds.")
-        time.sleep(30)
-
-    confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
-
-    if confirm == "YES":
+        print("WorkSpaces must be started before rebuilding.")
         for workspace in all_workspaces:
-            rebuild_workspace(session, workspace["WorkspaceId"])
-    else:
-        print("Rebuilding canceled.")
+            if workspace["State"] == "STOPPED":
+                start_workspace(session, workspace["WorkspaceId"])
 
+        while not check_if_all_started(session):
+            print("Not all WorkSpaces are running. Next check in 30 seconds.")
+            time.sleep(30)
+
+        confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
+
+        if confirm == "YES":
+            for workspace in all_workspaces:
+                rebuild_workspace(session, workspace["WorkspaceId"])
+        else:
+            print("Rebuilding canceled.")
+    else:
+        users_from_csv = import_from_csv("private/input.csv")
+        to_rebuild = find_csv_workspaces(session, users_from_csv, 'd-9367241b46')
+        for workspace in to_rebuild:
+            start_workspace(session, workspace)
+        time.sleep(300) # temporary, to do: add auto checker if workspace is available
 if __name__ == '__main__':
     main()
