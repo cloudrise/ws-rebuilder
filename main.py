@@ -52,7 +52,7 @@ def start_workspace(session, to_start):
     print("Starting in progress: ", to_start)
     try:
         response = client.start_workspaces(
-        start_workspaceRequests=[
+        StartWorkspaceRequests=[
             {
                 'WorkspaceId' : to_start
             }
