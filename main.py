@@ -36,7 +36,7 @@ def rebuild_workspace(session, to_rebuild):
     client = session.client('workspaces')
     print("Rebuilding in progress: ", to_rebuild)
     try:
-        resp = client.rebuild_workspaces(
+        response = client.rebuild_workspaces(
             rebuild_workspaceRequests=[
                 {
                     'WorkspaceId' : to_rebuild
@@ -47,14 +47,14 @@ def rebuild_workspace(session, to_rebuild):
         print("Something wrong while rebuilding workspace.", e)
 
 # Start given workspace
-def start_workspace(session, toStart):
+def start_workspace(session, to_start):
     client = session.client('workspaces')
-    print("Starting in progress: ", toStart)
+    print("Starting in progress: ", to_start)
     try:
         response = client.start_workspaces(
         start_workspaceRequests=[
             {
-                'WorkspaceId' : toStart
+                'WorkspaceId' : to_start
             }
         ]
            )
