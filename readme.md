@@ -27,6 +27,14 @@ Usage example:
 $ python ws-rebuilder.py eu-west-1
 $ python ws-rebuilder.py eu-west-1 --accesskey="ABCDEF" --secretkey="123456"
 ```
+You can also inject credentials using export command and then simply execute script. If you do so then you can skip *accesskey* and *secretkey* arguments. Just remember to specify a region!
+```sh
+$ export AWS_ACCESS_KEY_ID="YOUR_AWS_KEY_ID"
+$ export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
+$ export AWS_SESSION_TOKEN="YOUR_SESSION_TOKEN"
+
+$ python ws-rebuilder.py region
+```
 # IAM Policy
 Policy with minimum required permissions can be found in `ws-rebuilder-policy.json` file.
 
