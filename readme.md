@@ -13,27 +13,34 @@ $ pip install boto3
 $ pip install argparse
 ```
 # Usage
-WorkSpace Rebuilder uses IAM role by default (if started from EC2 instance). If you want to start it from on-premise host then you should pass credentials. Also region should be given.
+WorkSpace Rebuilder uses IAM role by default (if started from EC2 instance). If you want to start it from on-premise host then you should pass credentials. Also region should be given and rebuild mode. Possible rebuild modes are: all and csv. If "all" mode is choosen, script will get data about all existing Workspaces and it'll rebuild them. If "csv" mode is selected, script will get data about Workspaces defined in CSV file (Workspaces will be selected using usernames, defined in CSV file).
 Using IAM role:
 ```sh
-$ python ws-rebuilder.py region
+$ python ws-rebuilder.py region mode
+```
+If "csv" mode is selected you have to pass directory_id argument also.
+```sh
+$ python ws-rebuilder.py region mode --directory_id="d-abc123"
 ```
 Using credentials:
 ```sh
-$ python ws-rebuilder.py region --accesskey="yourAccessKey" --secretkey="yourSecretKey"
+$ python ws-rebuilder.py region mode --accesskey="yourAccessKey" --secretkey="yourSecretKey"
 ```
-Usage example:
+Usage examples:
 ```sh
-$ python ws-rebuilder.py eu-west-1
-$ python ws-rebuilder.py eu-west-1 --accesskey="ABCDEF" --secretkey="123456"
+$ python ws-rebuilder.py eu-west-1 all
+$ python ws-rebuilder.py eu-west-1 all --accesskey="ABCDEF" --secretkey="123456"
+$ python ws-rebuilder.py eu-west-1 csv --directory_id="d-12345"
+$ python ws-rebuilder.py eu-west-1 csv --directory_id="d-12345" --accesskey="ABCDEF" --secretkey="123456"
+
 ```
-You can also inject credentials using export command and then simply execute script. If you do so then you can skip *accesskey* and *secretkey* arguments. Just remember to specify a region!
+You can also inject credentials using export command and then simply execute script. If you do so then you can skip *accesskey* and *secretkey* arguments. Just remember to specify a region and mode!
 ```sh
 $ export AWS_ACCESS_KEY_ID="YOUR_AWS_KEY_ID"
 $ export AWS_SECRET_ACCESS_KEY="YOUR_SECRET_KEY"
 $ export AWS_SESSION_TOKEN="YOUR_SESSION_TOKEN"
 
-$ python ws-rebuilder.py region
+$ python ws-rebuilder.py region mode
 ```
 # IAM Policy
 Policy with minimum required permissions can be found in `ws-rebuilder-policy.json` file.
