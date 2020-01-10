@@ -73,15 +73,18 @@ def find_csv_workspaces(session, users, directory_id):
     client = session.client('workspaces')
     to_rebuild = []
     for user in users:
-        response = client.describe_workspaces(
-            DirectoryId = directory_id,
-            UserName = user[0]
-        )
-        if not response['Workspaces']:
-            print("Workspace for user {} doesn't exist. ".format(user[0]))
-        else:
-            for workspace in response['Workspaces']:
-                to_rebuild.append(workspace)
+        try:
+            response = client.describe_workspaces(
+                DirectoryId = directory_id,
+                UserName = user[0]
+            )
+            if not response['Workspaces']:
+                print("Workspace for user {} doesn't exist. ".format(user[0]))
+            else:
+                for workspace in response['Workspaces']:
+                    to_rebuild.append(workspace)
+        except Exception as e:
+            print("Something wrong while describing Workspaces", e)
     return to_rebuild
 
 # Check if all given Workspaces are in available state
