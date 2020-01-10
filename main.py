@@ -101,6 +101,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("region", help="Region where WorkSpaces are e.g eu-west-1.")
     parser.add_argument("mode", help="Rebuild mode: all, csv.")
+    parser.add_argument("--directory_id", help="Your directory ID.")
     parser.add_argument("--accesskey", help="Amazon Access Key ID. If not specified, IAM role will be used instead.")
     parser.add_argument("--secretkey", help="Amazon Secret Access Key. If not specified, IAM role will be used instead.")
     args = parser.parse_args()
@@ -124,19 +125,22 @@ def main():
         else:
             print("Rebuilding canceled.")
     elif args.mode == "csv":
-        users_from_csv = import_from_csv("private/input.csv")
-        workspaces_from_csv = find_csv_workspaces(session, users_from_csv, 'd-9367241b46')
-        for workspace in workspaces_from_csv:
-            start_workspace(session, workspace['WorkspaceId'])
-
-        while not check_workspace_state(session, workspaces_from_csv): # it won't move forward until all workspaces are in available state
-            time.sleep(30)
-            workspaces_from_csv = find_csv_workspaces(session, users_from_csv, 'd-9367241b46') # refresh list details to get new Workspaces state
-
-        confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
-        if confirm == "YES":
+        if args.directory_id is not None:
+            users_from_csv = import_from_csv("private/input.csv")
+            workspaces_from_csv = find_csv_workspaces(session, users_from_csv, args.directory_id)
             for workspace in workspaces_from_csv:
-                rebuild_workspace(session, workspace['WorkspaceId'])
+                start_workspace(session, workspace['WorkspaceId'])
+
+            while not check_workspace_state(session, workspaces_from_csv): # it won't move forward until all workspaces are in available state
+                time.sleep(30)
+                workspaces_from_csv = find_csv_workspaces(session, users_from_csv, args.directory_id) # refresh list details to get new Workspaces state
+
+            confirm = input("Are you sure to REBUILD all WorkSpaces? [YES]: ")
+            if confirm == "YES":
+                for workspace in workspaces_from_csv:
+                    rebuild_workspace(session, workspace['WorkspaceId'])
+        elif args.directoryid is None:
+            print("Please specify directory ID.")
     else:
         print("Wrong rebuild mode. Available options are: all, csv.")
 if __name__ == '__main__':
