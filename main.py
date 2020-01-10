@@ -87,7 +87,7 @@ def find_csv_workspaces(session, users, directory_id):
 # Check if all given Workspaces are in available state
 def check_workspace_state(session, workspaces = []):
     for workspace in workspaces:
-        while workspace['State'] != 'AVAILABLE':
+        if workspace['State'] != 'AVAILABLE':
             print('Workspace {} is not ready yet. Username: {}. Next check within 30 seconds.'.format(workspace['WorkspaceId'], workspace['UserName']))
             return False
     return True
@@ -126,6 +126,7 @@ def main():
         for workspace in workspaces_from_csv:
             start_workspace(session, workspace['WorkspaceId'])
         while not check_workspace_state(session, workspaces_from_csv): # it won't move forward until all workspaces are in available state
+            time.sleep(30)
             workspaces_from_csv = find_csv_workspaces(session, users_from_csv, 'd-9367241b46') # refresh list details to get new Workspaces state
         for workspace in workspaces_from_csv:
             rebuild_workspace(session, workspace['WorkspaceId'])
